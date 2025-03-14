@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { MapPin, MoreHorizontal } from "lucide-react"
+import { MapPin, MoreHorizontal, ArrowLeft } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,10 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useToast } from "@/hooks/use-toast"
+import withAuth from "@/utils/withAuth"
 
 
-export default function BookingsPage() {
+function BookingsPage() {
   const [bookings, setBookings] = useState([])
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchBookings() {
@@ -32,9 +35,33 @@ export default function BookingsPage() {
     fetchBookings()
   }, [])
 
+  async function handleDeleteBooking(bookingId: string) {
+    try {
+      await fetch(`http://localhost:8080/api/bookings/${bookingId}`, {
+        method: "DELETE",
+      })
+      setBookings((prev) => prev.filter((b: any) => b._id !== bookingId))
+      toast({
+        title: "Booking deleted",
+        description: "The booking has been successfully deleted.",
+      })
+    } catch (error) {
+      toast({
+        title: "Failed to delete booking",
+        description: "An error occurred while deleting the booking.",
+      })
+      console.error("Failed to delete booking:", error)
+    }
+  }
+
+  const printBill = (bookingId: string) => {
+    window.location.href = `http://localhost:8080/api/bill/download/${bookingId}`
+  }
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
+        <Link href="/dashboard" className="font-bold cursor-pointer flex justify-center gap-2"> <ArrowLeft /> Back To Dashboard</Link>
         <h1 className="text-2xl font-bold">Bookings</h1>
         <Button asChild>
           <Link href="/bookings/new">New Booking</Link>
@@ -102,10 +129,21 @@ export default function BookingsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit booking</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => printBill(booking._id)}>
+                          Print Bill
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/bookings/${booking._id}/edit`}>
+                            Edit booking
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">Cancel booking</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteBooking(booking._id)}
+                          className="text-red-600"
+                        >
+                          Cancel booking
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -119,3 +157,4 @@ export default function BookingsPage() {
   )
 }
 
+export default withAuth(BookingsPage);

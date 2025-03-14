@@ -1,5 +1,5 @@
 "use client"
-import { CalendarDays, MoreHorizontal, Search, UserPlus } from "lucide-react"
+import { ArrowLeft, CalendarDays, MoreHorizontal, Search, UserPlus } from "lucide-react"
 import axios from "axios"
 import { useState, useEffect } from "react"
 
@@ -15,9 +15,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Link from "next/link"
+import withAuth from "@/utils/withAuth"
 
-export default function DriversPage() {
+function DriversPage() {
   const [drivers, setDrivers] = useState([])
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     axios.get("http://localhost:8080/api/drivers").then((response) => {
@@ -35,14 +37,36 @@ export default function DriversPage() {
     }).format(date)
   }
 
+  const handleDelete = async (driverId: string) => {
+    try {
+      await axios.delete(`http://localhost:8080/api/drivers/${driverId}`)
+      setDrivers((prevDrivers) =>
+        prevDrivers.filter((driver: any) => driver._id !== driverId)
+      )
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  // Filter drivers based on search query
+  const filteredDrivers = drivers.filter((driver: any) =>
+    driver.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-        <h1 className="text-2xl font-bold">Drivers</h1>
+      <Link href="/dashboard" className="font-bold cursor-pointer flex justify-center gap-2"> <ArrowLeft /> Back To Dashboard</Link>
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search drivers..." className="pl-8 w-full md:w-[250px]" />
+            <Input
+              type="search"
+              placeholder="Search drivers..."
+              className="pl-8 w-full md:w-[250px]"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
           <Link href={`/drivers/new`}> 
           <Button>
@@ -72,7 +96,7 @@ export default function DriversPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {drivers.map((driver:any) => (
+              {filteredDrivers.map((driver:any) => (
                 <TableRow key={driver.id}>
                   <TableCell className="font-medium">{driver.name}</TableCell>
                   <TableCell className="hidden md:table-cell">{driver.email}</TableCell>
@@ -96,10 +120,17 @@ export default function DriversPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit driver</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/drivers/${driver._id}/edit`}>Edit driver</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>View bookings</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">Delete driver</DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDelete(driver._id)}
+                        >
+                          Delete driver
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -112,4 +143,6 @@ export default function DriversPage() {
     </div>
   )
 }
+
+export default withAuth(DriversPage);
 

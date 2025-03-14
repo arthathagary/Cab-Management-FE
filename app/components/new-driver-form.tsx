@@ -48,18 +48,27 @@ const driverFormSchema = z.object({
 // Combined schema
 const combinedFormSchema = userFormSchema.merge(driverFormSchema)
 
-type DriverFormValues = z.infer<typeof combinedFormSchema>
+type DriverFormValues = z.infer<typeof combinedFormSchema> & {
+  _id?: string
+}
 
-export default function NewDriverForm() {
+type NewDriverFormProps = {
+  driver?: DriverFormValues
+  isEdit?: boolean
+}
+
+export default function NewDriverForm({ driver, isEdit }: NewDriverFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Default values for the form
-  const defaultValues: Partial<DriverFormValues> = {
-    role: "driver",
-    status: "active",
-    experience: 0,
-  }
+  const defaultValues: Partial<DriverFormValues> = driver
+    ? { ...driver, role: "driver" }
+    : {
+        role: "driver",
+        status: "active",
+        experience: 0,
+      }
 
   const form = useForm<DriverFormValues>({
     resolver: zodResolver(combinedFormSchema),
@@ -68,21 +77,24 @@ export default function NewDriverForm() {
 
   async function onSubmit(data: DriverFormValues) {
     setIsSubmitting(true)
+    console.log("Submitting form with data:", driver)
 
     try {
-      // In a real application, you would send this data to your API
-      console.log("Form submitted:", data)
-
-      // Simulate API call
-      await axios.post("http://localhost:8080/api/drivers", data)
-
-      // Redirect to drivers list after successful submission
-      // router.push("/drivers")
+      if (isEdit) {
+        await axios.put(`http://localhost:8080/api/drivers/${driver!._id}`, data)
+      } else {
+        await axios.post("http://localhost:8080/api/drivers", data)
+      }
+      router.push("/drivers")
     } catch (error) {
       console.error("Error submitting form:", error)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function onError(errors: any) {
+    console.error("Validation errors:", errors)
   }
 
   return (
@@ -92,7 +104,7 @@ export default function NewDriverForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Personal Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -245,7 +257,7 @@ export default function NewDriverForm() {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Driver"}
+                {isEdit ? (isSubmitting ? "Updating..." : "Update Driver") : (isSubmitting ? "Creating..." : "Create Driver")}
               </Button>
             </CardFooter>
           </form>

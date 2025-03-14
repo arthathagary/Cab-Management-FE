@@ -13,6 +13,7 @@ import type React from "react" // Added import for React
 const LoginForm = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
   const dispatch = useDispatch<AppDispatch>()
   const router = useRouter()
 
@@ -20,11 +21,17 @@ const LoginForm = () => {
     e.preventDefault()
     try {
       const user =await dispatch(login({ email, password })).unwrap()
-      console.log("user2", user.token)
+      console.log("user2", user)
       localStorage.setItem("token", user.token)
+      localStorage.setItem("user", JSON.stringify(user))
       router.push("/dashboard")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to log in:", error)
+      if (error.name === "AxiosError" && error.code === "ERR_BAD_REQUEST") {
+        setErrorMessage("Invalid credentials. Please check your email or password.")
+      } else {
+        setErrorMessage("An unexpected error occurred. Please try again.")
+      }
     }
   }
 
@@ -47,6 +54,9 @@ const LoginForm = () => {
               required
             />
           </div>
+          {errorMessage && (
+            <p className="text-red-500 text-sm">{errorMessage}</p>
+          )}
           <Button type="submit" className="w-full">
             Login
           </Button>

@@ -22,14 +22,20 @@ const carFormSchema = z.object({
   }),
 })
 
-type CarFormValues = z.infer<typeof carFormSchema>
+type CarFormValues = z.infer<typeof carFormSchema> & {
+  _id?: string
+}
 
-export default function NewCarForm() {
+type NewCarFormProps = {
+  existingCar?: CarFormValues
+}
+
+export default function NewCarForm({ existingCar }: NewCarFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Set default values for car form
-  const defaultValues: Partial<CarFormValues> = {
+  const defaultValues: Partial<CarFormValues> = existingCar || {
     status: "available",
     capacity: 1,
   }
@@ -42,8 +48,11 @@ export default function NewCarForm() {
   async function onSubmit(data: CarFormValues) {
     setIsSubmitting(true)
     try {
-      console.log("Form submitted:", data)
-      await axios.post("http://localhost:8080/api/cars", data)
+      if (existingCar) {
+        await axios.put(`http://localhost:8080/api/cars/${existingCar._id}`, data)
+      } else {
+        await axios.post("http://localhost:8080/api/cars", data)
+      }
       // router.push("/cars")
     } catch (error) {
       console.error("Error submitting form:", error)
@@ -55,7 +64,7 @@ export default function NewCarForm() {
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Car Information</CardTitle>
+        <CardTitle>{existingCar ? "Edit Car" : "Car Information"}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -135,7 +144,7 @@ export default function NewCarForm() {
                 Cancel
               </Button>
               <Button id="submit-btn" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Car"}
+                {isSubmitting ? (existingCar ? "Updating..." : "Creating...") : (existingCar ? "Update Car" : "Create Car")}
               </Button>
             </CardFooter>
           </form>

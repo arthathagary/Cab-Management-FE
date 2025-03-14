@@ -28,8 +28,12 @@ const RegisterForm = () => {
 
   return (
     <Card className="w-[350px]">
-      <CardHeader>
+      <CardHeader className="flex w-full justify-between flex-row align-center">
         <CardTitle>Register</CardTitle>
+        <CardTitle className="!mt-0 cursor-pointer" onClick={()=>{
+          localStorage.clear();
+          router.push("/login")
+        }}>Logout</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -73,8 +77,6 @@ const RegisterForm = () => {
             >
               <option value="admin">admin</option>
               <option value="manager">manager</option>
-              <option value="customer">customer</option>
-              <option value="driver">driver</option>
             </select>
           </div>
           <Button type="submit" className="w-full">

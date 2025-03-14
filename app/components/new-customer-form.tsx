@@ -31,24 +31,32 @@ const customerFormSchema = z.object({
 
 type CustomerFormValues = z.infer<typeof customerFormSchema>
 
-export default function NewCustomerForm() {
+interface NewCustomerFormProps {
+  initialData?: Partial<CustomerFormValues>;
+  onSubmit?: (data: CustomerFormValues) => Promise<void>;
+}
+
+export default function NewCustomerForm({ initialData, onSubmit }: NewCustomerFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Default values for the form
-  const defaultValues: Partial<CustomerFormValues> = {
-
-  }
+  const defaultValues: Partial<CustomerFormValues> = initialData || {};
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
     defaultValues,
   })
 
-  async function onSubmit(data: CustomerFormValues) {
+  async function handleLocalSubmit(data: CustomerFormValues) {
     setIsSubmitting(true)
 
     try {
+      if (onSubmit) {
+        await onSubmit(data);
+        return;
+      }
+
       // In a real application, you would send this data to your API
       console.log("Form submitted:", data)
 
@@ -71,7 +79,7 @@ export default function NewCustomerForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleLocalSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}

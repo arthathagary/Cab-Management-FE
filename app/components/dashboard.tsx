@@ -66,7 +66,16 @@ const stats = [
 export default function Dashboard() {
   const [activeItem, setActiveItem] = useState("Dashboard")
   const router = useRouter()
-  const [bookings, setBookings] = useState([])
+  interface Booking {
+    _id: string
+    customer?: { name: string }
+    pickupLocation: string
+    dropLocation: string
+    status: string
+    fare: number
+  }
+
+  const [bookings, setBookings] = useState<Booking[]>([])
   const [stats, setStats] = useState({ users: 0, cars: 0, drivers: 0, customers: 0, bookings: 0 })
 
   useEffect(() => {
@@ -99,7 +108,7 @@ export default function Dashboard() {
           <SidebarHeader className="border-b">
             <div className="flex items-center gap-2 px-4 py-2">
               <Car className="h-6 w-6" />
-              <span className="text-lg font-bold">RideAdmin</span>
+              <span className="text-lg font-bold">Ride</span>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -147,10 +156,10 @@ export default function Dashboard() {
                     </Link>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <Link href="/reports">
-                      <SidebarMenuButton isActive={activeItem === "Reports"} onClick={() => setActiveItem("Reports")}>
+                    <Link href="/bills">
+                      <SidebarMenuButton isActive={activeItem === "Bills"} onClick={() => setActiveItem("Bills")}>
                         <CreditCard className="h-4 w-4" />
-                        <span>Reports</span>
+                        <span>Bills</span>
                       </SidebarMenuButton>
                     </Link>
                   </SidebarMenuItem>
@@ -166,14 +175,7 @@ export default function Dashboard() {
             <SidebarTrigger />
             <div className="w-full flex-1">
               <form className="hidden md:block">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search..."
-                    className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                  />
-                </div>
+              
               </form>
             </div>
             <DropdownMenu>
@@ -181,16 +183,11 @@ export default function Dashboard() {
                 <Button variant="outline" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src="/placeholder-user.jpg" alt="Avatar" />
-                    <AvatarFallback>AD</AvatarFallback>
+                    <AvatarFallback>Pro</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -235,7 +232,7 @@ export default function Dashboard() {
                     <TableHead className="hidden md:table-cell">Pickup Location</TableHead>
                     <TableHead className="hidden md:table-cell">Drop Location</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Fare</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -271,20 +268,7 @@ export default function Dashboard() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Actions</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>View details</DropdownMenuItem>
-                            <DropdownMenuItem>Edit booking</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">Cancel booking</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {booking.fare}
                       </TableCell>
                     </TableRow>
                   ))}

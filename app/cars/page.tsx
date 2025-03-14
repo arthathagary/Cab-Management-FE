@@ -1,5 +1,5 @@
 "use client"
-import { CalendarDays, MoreHorizontal, Search, UserPlus } from "lucide-react"
+import { ArrowLeft, CalendarDays, MoreHorizontal, Search, UserPlus } from "lucide-react"
 import axios from "axios"
 import { useState, useEffect } from "react"
 
@@ -15,9 +15,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Link from "next/link"
+import withAuth from "@/utils/withAuth"
 
-export default function CarsPage() {
+function CarsPage() {
   const [cars, setCars] = useState([])
+  const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
     axios.get("http://localhost:8080/api/cars").then((response) => {
@@ -35,14 +37,33 @@ export default function CarsPage() {
     }).format(date)
   }
 
+  const handleDeleteCar = async (id: string) => {
+    try {
+      await axios.delete(`http://localhost:8080/api/cars/${id}`)
+      setCars(cars.filter((car: any) => car._id !== id))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  // Filter cars based on search term
+  const filteredCars = cars.filter((car: any) =>
+    car.model.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-        <h1 className="text-2xl font-bold">Cars</h1>
+      <Link href="/dashboard" className="font-bold cursor-pointer flex justify-center gap-2"> <ArrowLeft /> Back To Dashboard</Link>
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search cars..." className="pl-8 w-full md:w-[250px]" />
+            <Input 
+              type="search" 
+              placeholder="Search cars..." 
+              className="pl-8 w-full md:w-[250px]"
+              onChange={(e) => setSearchTerm(e.target.value)} // added onChange handler
+            />
           </div>
           <Link href={`/cars/new`}> 
           <Button>
@@ -70,7 +91,7 @@ export default function CarsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {cars.map((car:any) => (
+              {filteredCars.map((car:any) => (
                 <TableRow key={car.id}>
                   <TableCell className="font-medium">{car.model}</TableCell>
                   <TableCell>{car.plateNumber}</TableCell>
@@ -92,10 +113,14 @@ export default function CarsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit car</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/cars/${car._id}/edit`}>Edit car</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>View bookings</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">Delete car</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteCar(car._id)}>
+                          Delete car
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -109,3 +134,4 @@ export default function CarsPage() {
   )
 }
 
+export default withAuth(CarsPage);

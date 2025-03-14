@@ -1,5 +1,5 @@
 "use client"
-import { CalendarDays, MoreHorizontal, Search, UserPlus } from "lucide-react"
+import { ArrowLeft, CalendarDays, MoreHorizontal, Search, UserPlus } from "lucide-react"
 import axios from "axios"
 import { useState, useEffect } from "react"
 
@@ -15,9 +15,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Link from "next/link"
+import withAuth from "@/utils/withAuth"
 
-export default function CustomersPage() {
+function CustomersPage() {
   const [customers, setCustomers] = useState([])
+  const [search, setSearch] = useState("") // added state for search
 
   useEffect(() => {
     axios.get("http://localhost:8080/api/customers").then((response) => {
@@ -35,14 +37,39 @@ export default function CustomersPage() {
     }).format(date)
   }
 
+  function handleDelete(id: string) {
+    axios
+      .delete(`http://localhost:8080/api/customers/${id}`)
+      .then(() => {
+        setCustomers((existing) => existing.filter((c: any) => c._id !== id))
+      })
+      .catch((error) => {
+        console.error("Failed to delete customer:", error)
+      })
+  }
+
+  // Filter customers based on search query (by name)
+  const filteredCustomers = customers.filter((customer: any) =>
+    customer.name.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-        <h1 className="text-2xl font-bold">Customers</h1>
+        <div className="flex gap-2 justify-center items-center">
+          <Link href="/dashboard" className="font-bold cursor-pointer flex justify-center gap-2"> <ArrowLeft /> Back To Dashboard</Link>
+          {/* <h1 className="text-2xl font-bold">Customers</h1> */}
+        </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search customers..." className="pl-8 w-full md:w-[250px]" />
+            <Input 
+              type="search" 
+              placeholder="Search customers..." 
+              className="pl-8 w-full md:w-[250px]" 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)} // added onChange handler
+            />
           </div>
           <Link href={`/customers/new`}> 
           <Button>
@@ -70,7 +97,7 @@ export default function CustomersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customers.map((customer:any) => (
+              {filteredCustomers.map((customer:any) => (
                 <TableRow key={customer.id}>
                   <TableCell className="font-medium">{customer.name}</TableCell>
                   <TableCell className="hidden md:table-cell">{customer.email}</TableCell>
@@ -91,11 +118,18 @@ export default function CustomersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit customer</DropdownMenuItem>
-                        <DropdownMenuItem>View bookings</DropdownMenuItem>
+
+                        <DropdownMenuItem>
+                          <Link href={`/customers/${customer._id}/edit`}>Edit customer</Link>
+                        </DropdownMenuItem>
+                       
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">Delete customer</DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDelete(customer._id)}
+                        >
+                          Delete customer
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -108,4 +142,6 @@ export default function CustomersPage() {
     </div>
   )
 }
+
+export default withAuth(CustomersPage);
 

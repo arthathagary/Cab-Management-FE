@@ -8,6 +8,8 @@ import { z } from "zod";
 import { Car, MapPin, User } from "lucide-react";
 import axios from "axios";
 import useSWR from "swr";
+import { useToast } from "@/hooks/use-toast"
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -61,11 +63,22 @@ const bookingFormSchema = z.object({
   }),
 });
 
-type BookingFormValues = z.infer<typeof bookingFormSchema>;
+type BookingFormValues = z.infer<typeof bookingFormSchema> & {
+  _id?: string;
+};
 
-export default function NewBookingForm() {
+type NewBookingFormProps = {
+  bookingData?: BookingFormValues;
+  isEdit?: boolean;
+};
+
+export default function NewBookingForm({
+  bookingData,
+  isEdit,
+}: NewBookingFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   // Fetch customers from the API using Axios and SWR
   const { data: customers, error } = useSWR(
@@ -85,9 +98,9 @@ export default function NewBookingForm() {
   );
 
   // All hooks are called unconditionally
-  const defaultValues: Partial<BookingFormValues> = {
-    status: "pending",
-  };
+  const defaultValues: Partial<BookingFormValues> = bookingData
+    ? { ...bookingData }
+    : { status: "pending" as "pending" };
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
@@ -97,14 +110,34 @@ export default function NewBookingForm() {
   async function onSubmit(data: BookingFormValues) {
     setIsSubmitting(true);
     try {
-      console.log("Form submitted:", data);
+      if (isEdit && bookingData?._id) {
+        // PUT request for edit
+        await axios.put(
+          `http://localhost:8080/api/bookings/${bookingData._id}`,
+          data
+        );
+        toast({
+          title: "Booking updated",
+          description: "The booking has been updated successfully",
+        })
+        router.push("/bookings");
 
-      axios.post("http://localhost:8080/api/bookings", data);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // router.push("/bookings");
+      } else {
+        // POST request for new
+        await axios.post("http://localhost:8080/api/bookings", data);
+        toast({
+          title: "Booking created",
+          description: "The booking has been created successfully",
+        });
+        router.push("/bookings");
+      }
     } catch (error) {
+      toast({
+        title: "Failed to create booking",
+        description: "An error occurred while creating the booking",
+      });
       console.error("Error submitting form:", error);
+     
     } finally {
       setIsSubmitting(false);
     }
@@ -114,10 +147,9 @@ export default function NewBookingForm() {
   if (driversError) console.error("Failed to load drivers:", driversError);
   if (carsError) console.error("Failed to load cars:", carsError);
 
-  return (
-    !customers || !drivers || !cars ? (
-      <div>Loading...</div>
-    ) : (
+  return !customers || !drivers || !cars ? (
+    <div>Loading...</div>
+  ) : (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle>Booking Information</CardTitle>
@@ -173,7 +205,7 @@ export default function NewBookingForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {drivers.map((driver:any) => (
+                        {drivers.map((driver: any) => (
                           <SelectItem key={driver._id} value={driver._id}>
                             <div className="flex items-center">
                               <User className="mr-2 h-4 w-4" />
@@ -207,7 +239,7 @@ export default function NewBookingForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {cars.map((car:any) => (
+                        {cars.map((car: any) => (
                           <SelectItem key={car._id} value={car._id}>
                             <div className="flex items-center">
                               <Car className="mr-2 h-4 w-4" />
@@ -317,6 +349,5 @@ export default function NewBookingForm() {
         </Form>
       </CardContent>
     </Card>
-    )
   );
 }

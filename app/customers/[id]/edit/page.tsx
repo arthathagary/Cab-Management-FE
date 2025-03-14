@@ -2,9 +2,11 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import NewCustomerForm from "@/components/new-customer-form"
+import { useRouter } from "next/navigation"
 
 export default function EditCustomerPage({ params }: { params: { id: string } }) {
   const [customer, setCustomer] = useState<any>(null)
+  const router = useRouter()
 
   useEffect(() => {
     axios.get(`http://localhost:8080/api/customers/${params.id}`).then((response) => {
@@ -14,6 +16,7 @@ export default function EditCustomerPage({ params }: { params: { id: string } })
 
   const handleSubmit = async (updatedCustomer: any) => {
     await axios.put(`http://localhost:8080/api/customers/${params.id}`, updatedCustomer)
+    router.push("/customers")
   }
 
   if (!customer) return <div>Loading...</div>

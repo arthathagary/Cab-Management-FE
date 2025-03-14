@@ -64,7 +64,7 @@ export default function NewCustomerForm({ initialData, onSubmit }: NewCustomerFo
       await axios.post("http://localhost:8080/api/customers", data)
 
       // Redirect to customers list after successful submission
-      // router.push("/customers")
+      router.push("/customers")
     } catch (error) {
       console.error("Error submitting form:", error)
     } finally {

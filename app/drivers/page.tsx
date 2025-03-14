@@ -119,11 +119,9 @@ function DriversPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View details</DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href={`/drivers/${driver._id}/edit`}>Edit driver</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>View bookings</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-red-600"

@@ -112,11 +112,9 @@ function CarsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View details</DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href={`/cars/${car._id}/edit`}>Edit car</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>View bookings</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteCar(car._id)}>
                           Delete car

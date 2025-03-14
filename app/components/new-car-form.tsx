@@ -53,7 +53,7 @@ export default function NewCarForm({ existingCar }: NewCarFormProps) {
       } else {
         await axios.post("http://localhost:8080/api/cars", data)
       }
-      // router.push("/cars")
+      router.push("/cars")
     } catch (error) {
       console.error("Error submitting form:", error)
     } finally {
